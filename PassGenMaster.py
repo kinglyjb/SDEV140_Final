@@ -18,6 +18,32 @@ class PassGenMaster:
         # GUI Elements
         self.create_gui()
 
+    def check_password_strength(self, password):
+        # Calculate a percentage based on various criteria
+        length_weight = 0.4
+        uppercase_weight = 0.2
+        digit_weight = 0.2
+        special_char_weight = 0.2
+
+        length_percentage = min(100, (len(password) / 16) * 100)
+        uppercase_percentage = 100 if any(char.isupper() for char in password) else 0
+        digit_percentage = 100 if any(char.isdigit() for char in password) else 0
+        special_char_percentage = 100 if any(char in string.punctuation for char in password) else 0
+
+        total_percentage = (
+            length_weight * length_percentage +
+            uppercase_weight * uppercase_percentage +
+            digit_weight * digit_percentage +
+            special_char_weight * special_char_percentage
+        )
+
+        return int(total_percentage)
+
+    def update_strength_meter(self, password):
+        strength = self.check_password_strength(password)
+        self.strength_label.config(text=f"Password Strength: {strength}%")
+        self.strength_progressbar['value'] = strength
+
     def generate_password(self):
         length = int(self.length_var.get())
         uppercase = string.ascii_uppercase if self.use_uppercase_var.get() else ""
@@ -30,6 +56,9 @@ class PassGenMaster:
         # Display the generated password in the Tkinter window
         self.password_label.config(text=f"Generated Password: {password}")
 
+        # Update the strength meter
+        self.update_strength_meter(password)
+
     def copy_to_clipboard(self):
         password = self.password_label.cget("text").split(": ")[1]
         pyperclip.copy(password)
@@ -38,7 +67,6 @@ class PassGenMaster:
         self.password_label.config(text="")
 
     def create_gui(self):
-        # GUI Elements
         ttk.Label(self.root, text="Password Length:").grid(row=0, column=0, padx=20, pady=20)
         entry = ttk.Entry(self.root, textvariable=self.length_var, width=5)
         entry.grid(row=0, column=1, padx=20, pady=20)
@@ -55,8 +83,18 @@ class PassGenMaster:
         self.password_label = ttk.Label(self.root, text="")
         self.password_label.grid(row=7, column=0, columnspan=2, pady=10)
 
+        # Label for the password strength meter
+        self.strength_label = ttk.Label(self.root, text="Password Strength: ")
+        self.strength_label.grid(row=8, column=0, columnspan=2, pady=10)
+
+        # Progressbar for visual representation of password strength
+        self.strength_progressbar = ttk.Progressbar(self.root, orient=tk.HORIZONTAL, mode='determinate', length=200)
+        self.strength_progressbar.grid(row=9, column=0, columnspan=2, pady=10)
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = PassGenMaster(root)
-    root.geometry("400x450")  # Set the initial size of the window
+    root.geometry("400x550")  # Adjusted the height to accommodate the progress bar
     root.mainloop()
+
+
